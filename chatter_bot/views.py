@@ -96,16 +96,23 @@ def get_response(fb_id, text):
 
         disfeed = distances(" ".join(ntext), getFeeds())
         print disfeed
-        min_feed_d = min(disfeed)
-        min_feed = [i for i, v in enumerate(disfeed) if v == min_feed_d]
-        print min_feed
+	if disfeed: 
+            min_feed_d = min(disfeed)
+            min_feed = [i for i, v in enumerate(disfeed) if v == min_feed_d]
+            print min_feed
+	else:
+            min_feed = []
+	    min_feed_d = 100
 
         discard = distances(" ".join(ntext), getCardsKeywords())
         print discard
-        min_card_d = min(discard)
-        min_card = [i for i, v in enumerate(discard) if v == min_card_d]
-        print min_card
-
+	if discard:
+            min_card_d = min(discard)
+            min_card = [i for i, v in enumerate(discard) if v == min_card_d]
+            print min_card
+	else:
+	    min_card = []
+	    min_card_d = 100
         o_min=min([min_dis, min_feed_d, min_card_d])
         print o_min
         type_of_resp = [i for i, v in zip(["message","feed","card"], [min_dis, min_feed_d, min_card_d]) if v == o_min]
@@ -126,5 +133,6 @@ def get_response(fb_id, text):
 def distances(word, w_list):
     print word
     print w_list
+    w_list = filter(None, w_list)
     print "se najdem"
     return [distance(word, l_word) for l_word in w_list]
