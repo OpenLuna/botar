@@ -46,7 +46,7 @@ def parse(message, sender):
 
 
 def get_response(fb_id, text):
-    print "finding", text
+    #print "finding", text
     mr = db.bot.map_reduce(mapper, reducer, out = {'inline' : 1}, full_response = True)
     keys = [item["_id"] for item in mr["results"]]
 
@@ -110,21 +110,40 @@ def get_response(fb_id, text):
         print o_min
         type_of_resp = [i for i, v in zip(["message","feed","card"], [min_dis, min_feed_d, min_card_d]) if v == o_min]
 
-
-        if type_of_resp[0]=="message":
-            resp = db.bot.find_one({'request': keys[random.choice(mins)]})["response"]
-            ChatHistory(fb_id=str(fb_id), text=resp, request=False).save()
-            return "message", resp
-        elif type_of_resp[0]=="feed":
-            return feed_register(getPerson(fb_id), getFeeds()[random.choice(min_feed)])
-        elif type_of_resp[0]=="card":
-            keyword = getCardsKeywords()[random.choice(min_card)]
-            print "card send", keyword
-            return "card", list(FbCard.objects.filter(keyword=keyword))
+        if text.lower()[:7] == "narobe:":
+            print "narobe"
+            return "message", correct(text, fb_id)
+        else:
+            ChatHistory(fb_id=str(fb_id), text=" ".join(ntext), request=True, isQuestion=isQuestion).save()
+            if type_of_resp[0]=="message":
+                resp = db.bot.find_one({'request': keys[random.choice(mins)]})["response"]
+                ChatHistory(fb_id=str(fb_id), text=resp, request=False).save()
+                return "message", resp
+            elif type_of_resp[0]=="feed":
+                return feed_register(getPerson(fb_id), getFeeds()[random.choice(min_feed)])
+            elif type_of_resp[0]=="card":
+                keyword = getCardsKeywords()[random.choice(min_card)]
+                print "card send", keyword
+                return "card", list(FbCard.objects.filter(keyword=keyword))
 
 
 def distances(word, w_list):
     print word
     print w_list
     print "se najdem"
-    return [distance(word, l_word) for l_word in w_list]
+    return [distance(str(word), str(l_word)) for l_word in w_list]
+
+
+def correct(text, fb_id):
+    text = text[8:]
+    request_obj = list(ChatHistory.objects.filter(fb_id=str(fb_id), request=True).order_by("id"))[-2]
+    print request_obj.text
+    db_obj = db.bot.find_one({'request': request_obj.text})
+    print db_obj
+    pair = {"request":request_obj.text, "response": text, "question": request_obj.isQuestion}
+    print pair, type(pair)
+    if db_obj:
+        db.bot.replace_one(db_obj, pair)
+    else:
+        db.bot.insert_one(pair)
+    return "Hvala, da me poravljaš ;) s tabo bom postal močnejši"
