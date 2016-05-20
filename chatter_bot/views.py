@@ -46,7 +46,6 @@ def parse(message, sender):
 
 
 def get_response(fb_id, text):
-    #print "finding", text
     mr = db.bot.map_reduce(mapper, reducer, out = {'inline' : 1}, full_response = True)
     keys = [item["_id"] for item in mr["results"]]
 
@@ -135,21 +134,15 @@ def get_response(fb_id, text):
 
 
 def distances(word, w_list):
-    print word
-    print w_list
     w_list = filter(None, w_list)
-    print "se najdem"
     return [distance(word, l_word) for l_word in w_list]
 
 
 def correct(text, fb_id):
     text = text[8:]
     request_obj = list(ChatHistory.objects.filter(fb_id=str(fb_id), request=True).order_by("id"))[-1]
-    print request_obj.text
     db_obj = db.bot.find_one({'request': request_obj.text})
-    print db_obj
     pair = {"request":request_obj.text, "response": text, "question": request_obj.isQuestion}
-    print pair, type(pair)
     if db_obj:
         db.bot.replace_one(db_obj, pair)
     else:
